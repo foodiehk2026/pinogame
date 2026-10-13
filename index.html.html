@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>測出你的『今日雪糕幸運指數』| Morinaga Pino</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Asian Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&family=M+PLUS+Rounded+1c:wght@700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            background: #4a0404;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .font-rounded {
+            font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif;
+        }
+
+        /* Morinaga Theme Gradient Background */
+        .bg-pino-red {
+            background: radial-gradient(circle at center, #ba1c1c 0%, #700606 70%, #3d0202 100%);
+        }
+
+        .bg-gold-gradient {
+            background: linear-gradient(135deg, #ffe885 0%, #f7b733 50%, #c47c00 100%);
+        }
+
+        .text-gold-glow {
+            color: #fff4bd;
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 180, 0, 0.5);
+        }
+
+        /* 3D Box Styling & Pull Tab */
+        .pino-box-shadow {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Lid Peeling Animation */
+        .lid-peel {
+            transform-origin: top center;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease;
+        }
+
+        .lid-peeled {
+            transform: rotateX(-110deg) translateY(-30px);
+            opacity: 0.1;
+        }
+
+        /* Pulse glow animation for lucky shapes */
+        @keyframes luckyGlow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 20px rgba(255, 225, 100, 1)); transform: scale(1.08); }
+        }
+
+        .animate-lucky-pulse {
+            animation: luckyGlow 1.8s infinite ease-in-out;
+        }
+
+        /* Floating sparkles background canvas */
+        #sparkleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Card Shimmer Effect */
+        .shimmer-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.1) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        /* Dotted Pull Tab Line Animation */
+        @keyframes dash {
+            to { stroke-dashoffset: -40; }
+        }
+        .dash-line {
+            stroke-dasharray: 8, 8;
+            animation: dash 1.2s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-pino-red min-h-screen w-full flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
+
+    <!-- Background Sparkle Canvas -->
+    <canvas id="sparkleCanvas"></canvas>
+
+    <!-- Sound Toggle Floating Button -->
+    <button id="soundToggleBtn" onclick="toggleAudio()" class="absolute top-4 right-4 z-50 bg-black/40 hover:bg-black/60 border border-amber-400/40 text-amber-300 w-10 h-10 rounded-full flex items-center justify-center text-sm backdrop-blur-md shadow-lg transition active:scale-95">
+        <i id="soundIcon" class="fas fa-volume-up"></i>
+    </button>
+
+    <!-- Main Container Frame -->
+    <main class="w-full max-w-md relative z-20 flex flex-col items-center">
+
+        <section id="phaseStart" class="w-full flex flex-col items-center text-center transition-all duration-500">
+            <!-- Brand Badge Header -->
+            <div class="inline-flex items-center space-x-2 bg-gradient-to-r from-red-950 via-amber-900/80 to-red-950 border border-amber-400/50 px-4 py-1.5 rounded-full mb-4 shadow-md">
+                <span class="text-amber-300 font-bold text-xs tracking-widest uppercase">MORINAGA 森永乳業</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span class="text-amber-100 text-xs font-semibold">公式幸運診斷</span>
+            </div>
+
+            <!-- Title Header -->
+            <h1 class="text-3xl sm:text-4xl font-black font-rounded text-gold-glow mb-2 leading-tight drop-shadow-lg">
+                測出你的<br>《今日雪糕幸運指數》
+            </h1>
+            <p class="text-xs sm:text-sm text-amber-200/90 mb-6 max-w-xs font-light">
+                撕開經典 Pino 雪糕盒，看看今天的運勢與專屬幸運甜品！
+            </p>
+
+            <!-- Stylized Box Graphic Preview -->
+            <div class="relative w-64 h-48 my-2 flex items-center justify-center group cursor-pointer" onclick="goToPhaseUnbox()">
+                <div class="absolute inset-0 bg-amber-400/20 rounded-3xl blur-xl group-hover:bg-amber-400/30 transition"></div>
+                
+                <div class="w-full h-full bg-gradient-to-br from-red-700 to-red-900 border-2 border-amber-400/60 rounded-2xl p-4 pino-box-shadow flex flex-col justify-between relative overflow-hidden transform group-hover:scale-105 transition duration-300">
+                    <div class="flex justify-between items-start">
+                        <span class="text-2xl font-black text-amber-300 tracking-wider">pino</span>
+                        <span class="text-[10px] bg-red-950 text-amber-300 px-2 py-0.5 rounded border border-amber-400/40 font-bold">冰淇淋</span>
+                    </div>
+                    
+                    <div class="flex justify-center items-center my-2 space-x-2">
+                        <div class="w-10 h-10 rounded-full bg-amber-900/60 border border-amber-400/40 flex items-center justify-center text-xl shadow-inner">🍫</div>
+                        <div class="w-10 h-10 rounded-full bg-amber-900/60 border border-amber-400/40 flex items-center justify-center text-xl shadow-inner">⭐</div>
+                        <div class="w-10 h-10 rounded-full bg-amber-900/60 border border-amber-400/40 flex items-center justify-center text-xl shadow-inner">❤️</div>
+                    </div>
+
+                    <div class="w-full bg-amber-400/20 h-6 rounded-lg flex items-center justify-between px-3 border border-amber-300/30">
+                        <span class="text-[11px] text-amber-200 font-bold">>>> OPEN HERE >>></span>
+                        <i class="fas fa-[#ff3b3b] fa-arrow-right text-xs text-amber-300"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input / Start Form -->
+            <div class="w-full max-w-xs mt-6 space-y-3">
+                <input id="userNameInput" type="text" placeholder="輸入你的名字 / 暱稱 (選填)" maxlength="12"
+                       class="w-full px-4 py-3 bg-red-950/80 border border-amber-400/40 rounded-xl text-center text-amber-100 placeholder-amber-300/50 text-sm focus:outline-none focus:border-amber-300 shadow-inner">
+                
+                <button onclick="goToPhaseUnbox()" class="w-full py-3.5 bg-gold-gradient hover:brightness-110 text-red-950 font-black font-rounded text-lg rounded-xl shadow-xl shadow-red-950/50 transform active:scale-95 transition flex items-center justify-center space-x-2 border border-amber-200">
+                    <span>開啟今日幸運 Pino</span>
+                    <i class="fas fa-magic"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="phaseUnbox" class="w-full flex flex-col items-center text-center hidden transition-all duration-500">
+            <div class="mb-4">
+                <span class="text-xs bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full border border-amber-400/30 font-bold uppercase tracking-wider">STEP 1: 撕開撕口</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-amber-100 mt-2">沿著虛線向右滑動撕開拉條</h2>
+            </div>
+
+            <!-- Interactive Pino Box Container -->
+            <div class="relative w-80 h-96 my-2 flex items-center justify-center">
+                <!-- Inner Tray with 6 Pino Ice Creams (Hidden under lid) -->
+                <div id="pinoTray" class="absolute inset-0 bg-gradient-to-br from-amber-950 to-stone-900 border-2 border-amber-500/50 rounded-2xl p-4 flex flex-col justify-between shadow-2xl">
+                    <div class="text-xs text-amber-400/70 font-mono tracking-widest text-left">MORINAGA PINO 6 PIECES</div>
+                    
+                    <!-- 6 Grid Tray Slots -->
+                    <div class="grid grid-cols-3 gap-3 my-auto p-2">
+                        <div class="pino-slot w-20 h-20 bg-stone-900/90 rounded-full border border-amber-500/30 flex items-center justify-center shadow-inner relative"></div>
+                        <div class="pino-slot w-20 h-20 bg-stone-900/90 rounded-full border border-amber-500/30 flex items-center justify-center shadow-inner relative"></div>
+                        <div class="pino-slot w-20 h-20 bg-stone-900/90 rounded-full border border-amber-500/30 flex items-center justify-center shadow-inner relative"></div>
+                        <div class="pino-slot w-20 h-20 bg-stone-900/90 rounded-full border border-amber-500/30 flex items-center justify-center shadow-inner relative"></div>
+                        <div class="pino-slot w-20 h-20 bg-stone-900/90 rounded-full border border-amber-500/30 flex items-center justify-center shadow-inner relative"></div>
+                        <div class="pino-slot w-20 h-20 bg-stone-900/90 rounded-full border border-amber-500/30 flex items-center justify-center shadow-inner relative"></div>
+                    </div>
+
+                    <div class="text-center text-[10px] text-amber-300/60 font-serif">ひとくちの幸せ・森永乳業</div>
+                </div>
+
+                <!-- Box Cover Lid (Interactive Peel Overlay) -->
+                <div id="boxLid" class="lid-peel absolute inset-0 bg-gradient-to-br from-red-600 via-red-800 to-red-950 border-2 border-amber-400 rounded-2xl p-4 flex flex-col justify-between pino-box-shadow z-20">
+                    <div class="flex justify-between items-start">
+                        <span class="text-3xl font-black text-amber-300 tracking-wider font-rounded">pino</span>
+                        <div class="text-right">
+                            <span class="text-[10px] bg-red-950 text-amber-300 px-2 py-0.5 rounded border border-amber-400/40 font-bold block">ピノ</span>
+                            <span class="text-[9px] text-amber-200/80">森永乳業</span>
+                        </div>
+                    </div>
+
+                    <!-- Center Decor -->
+                    <div class="my-auto py-4 bg-red-950/40 rounded-xl border border-amber-400/20 px-3">
+                        <p class="text-xs text-amber-200/90 font-medium">請順著箭頭撕開</p>
+                        <p class="text-[10px] text-amber-300/60 mt-0.5">HAPPY PINO FORTUNE TEST</p>
+                    </div>
+
+                    <!-- Pull Tab Drag Track -->
+                    <div id="pullTabTrack" class="relative w-full h-12 bg-red-950/80 rounded-xl border-2 border-dashed border-amber-400/80 p-1 flex items-center overflow-hidden touch-none cursor-pointer">
+                        <!-- SVG Dotted Animated Guidance -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="20" y1="50%" x2="90%" y2="50%" stroke="#fef08a" stroke-width="2" class="dash-line" />
+                        </svg>
+
+                        <!-- Draggable Tab Handle -->
+                        <div id="pullTabHandle" class="w-12 h-10 bg-gold-gradient rounded-lg shadow-lg flex items-center justify-center text-red-950 font-black text-lg z-30 transition-transform cursor-grab active:cursor-grabbing">
+                            <i class="fas fa-angle-double-right"></i>
+                        </div>
+                        <span class="ml-14 text-xs font-bold text-amber-300 tracking-wider pointer-events-none">向右滑動撕開 >>></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="phaseSelect" class="w-full flex flex-col items-center text-center hidden transition-all duration-500">
+            <div class="mb-4">
+                <span class="text-xs bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full border border-amber-400/30 font-bold uppercase tracking-wider">STEP 2: 選擇幸運 Pino</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-amber-100 mt-1">點擊盒內其中一顆 Pino 揭曉運勢！</h2>
+            </div>
+
+            <!-- Opened Box Grid Tray -->
+            <div class="w-80 h-96 bg-gradient-to-br from-amber-950 via-stone-900 to-amber-950 border-2 border-amber-400/80 rounded-2xl p-4 flex flex-col justify-between pino-box-shadow my-2 relative">
+                <div class="flex justify-between items-center text-xs text-amber-400/80 font-mono border-b border-amber-500/20 pb-2">
+                    <span>MORINAGA PINO</span>
+                    <span id="pinoPromptText" class="text-amber-300 font-bold animate-pulse">👈 請點擊一顆</span>
+                </div>
+
+                <!-- 6 Interactive Pino Pieces -->
+                <div id="pinoSelectionGrid" class="grid grid-cols-3 gap-3 my-auto p-2">
+                    <!-- Dynamic Pieces Rendered via JS -->
+                </div>
+
+                <div class="text-center text-[11px] text-amber-300/70 font-medium">
+                    6顆中有機會藏著隱藏版「星星」或「心形」Pino 喔！
+                </div>
+            </div>
+        </section>
+
+        <section id="phaseResult" class="w-full flex flex-col items-center text-center hidden transition-all duration-500">
+            <!-- Result Shimmer Card Container -->
+            <div id="fortuneCard" class="w-full shimmer-card rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden text-left border border-amber-400/50">
+                <!-- Card Decorative Header -->
+                <div class="flex justify-between items-start border-b border-amber-400/30 pb-3 mb-4">
+                    <div>
+                        <span class="text-[10px] text-amber-300 uppercase tracking-widest font-bold block">MORINAGA TODAY'S FORTUNE</span>
+                        <h3 id="cardUserName" class="text-lg font-black text-amber-100">今日幸運診斷報告</h3>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs bg-amber-400/20 text-amber-300 px-2.5 py-1 rounded-full border border-amber-400/40 font-black" id="cardResultRank">
+                            超大吉 ✨
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Main Reveal Section (Image & Score) -->
+                <div class="flex items-center space-x-4 my-2 bg-black/30 p-3 rounded-2xl border border-amber-400/20">
+                    <div id="resultShapeIconContainer" class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-900/80 to-red-950 flex items-center justify-center text-4xl border border-amber-400/60 shadow-lg relative flex-shrink-0">
+                        <!-- Icon injected by JS -->
+                    </div>
+                    <div>
+                        <div class="text-xs text-amber-200/80 font-medium">今日雪糕幸運指數</div>
+                        <div class="flex items-baseline space-x-1">
+                            <span id="luckScoreValue" class="text-3xl sm:text-4xl font-black text-gold-glow font-rounded">98</span>
+                            <span class="text-lg font-bold text-amber-400">%</span>
+                        </div>
+                        <div id="shapeNameBadge" class="text-xs font-bold text-amber-300 mt-0.5">
+                            【心形 Pino】
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fortune Radar / Metrics -->
+                <div class="grid grid-cols-2 gap-2 my-4 text-xs">
+                    <div class="bg-black/30 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
+                        <span class="text-stone-300">💖 桃花指數</span>
+                        <span id="metricLove" class="font-black text-amber-300">95%</span>
+                    </div>
+                    <div class="bg-black/30 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
+                        <span class="text-stone-300">💼 事業學業</span>
+                        <span id="metricCareer" class="font-black text-amber-300">88%</span>
+                    </div>
+                    <div class="bg-black/30 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
+                        <span class="text-stone-300">💰 財運爆棚</span>
+                        <span id="metricWealth" class="font-black text-amber-300">90%</span>
+                    </div>
+                    <div class="bg-black/30 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
+                        <span class="text-stone-300">🍦 甜蜜程度</span>
+                        <span id="metricSweet" class="font-black text-amber-300">100%</span>
+                    </div>
+                </div>
+
+                <!-- Personalized Fortune Analysis -->
+                <div class="bg-red-950/60 p-3.5 rounded-xl border border-amber-400/30 my-3 space-y-1.5">
+                    <div class="text-xs font-bold text-amber-300 flex items-center space-x-1">
+                        <i class="fas fa-sparkles"></i>
+                        <span>今日運勢開運分析：</span>
+                    </div>
+                    <p id="fortuneTextAnalysis" class="text-xs text-amber-100/90 leading-relaxed font-light">
+                        恭喜開出超稀有心形 Pino！今天的人緣與桃花運勢達至頂峰，無論是工作交流還是朋友聚會，都能展現極致親和力！
+                    </p>
+                </div>
+
+                <!-- Ice Cream Pairing Recommendation -->
+                <div class="bg-gradient-to-r from-amber-950 to-red-950 p-3.5 rounded-xl border border-amber-500/40 flex items-center space-x-3">
+                    <div class="text-2xl p-2 bg-amber-400/20 rounded-lg">🍫</div>
+                    <div>
+                        <div class="text-[10px] text-amber-300 uppercase font-bold">推薦今日幸運甜品</div>
+                        <div id="pairingTitle" class="text-xs font-bold text-amber-100">PARM 絲滑生朱古力雪條</div>
+                        <div id="pairingDesc" class="text-[11px] text-amber-200/80 leading-tight mt-0.5">入口即化質感，為你鎖定全天甜蜜好運！</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Action Buttons -->
+            <div class="w-full max-w-xs mt-5 space-y-2.5">
+                <button onclick="shareFortuneCard()" class="w-full py-3 bg-gold-gradient hover:brightness-110 text-red-950 font-black text-base rounded-xl shadow-lg border border-amber-200 flex items-center justify-center space-x-2 active:scale-95 transition">
+                    <i class="fas fa-share-alt"></i>
+                    <span>分享我的幸運運勢</span>
+                </button>
+                <button onclick="resetGame()" class="w-full py-3 bg-black/40 hover:bg-black/60 border border-amber-400/40 text-amber-200 font-bold text-sm rounded-xl flex items-center justify-center space-x-2 active:scale-95 transition">
+                    <i class="fas fa-redo-alt"></i>
+                    <span>再測一次</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Audio Synthesizer Class using Web Audio API
+        class AudioSynth {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playTear() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.15;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1000;
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            }
+            playPop() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(700, now + 0.08);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.08);
+            }
+            playChime() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.06);
+                    gain.gain.setValueAtTime(0.25, now + i * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.06);
+                    osc.stop(now + i * 0.06 + 0.35);
+                });
+            }
+        }
+
+        const audio = new AudioSynth();
+
+        function toggleAudio() {
+            audio.muted = !audio.muted;
+            const icon = document.getElementById('soundIcon');
+            if (audio.muted) {
+                icon.className = 'fas fa-volume-mute text-stone-400';
+            } else {
+                icon.className = 'fas fa-volume-up text-amber-300';
+                audio.playPop();
+            }
+        }
+
+        // Particle System for Background Sparkles
+        const canvas = document.getElementById('sparkleCanvas');
+        const ctx = canvas.getContext('2d');
+        let sparkles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Sparkle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.alpha = Math.random() * 0.8 + 0.2;
+                this.speed = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.y -= this.speed;
+                this.alpha -= 0.003;
+                if (this.y < 0 || this.alpha <= 0) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 40; i++) sparkles.push(new Sparkle());
+
+        function animateSparkles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            sparkles.forEach(s => {
+                s.update();
+                s.draw();
+            });
+            requestAnimationFrame(animateSparkles);
+        }
+        animateSparkles();
+
+        // Fortune Data Configurations
+        const FORTUNE_TYPES = [
+            {
+                type: 'HEART',
+                name: '心形 Pino',
+                icon: '❤️',
+                rank: '大吉 💖',
+                score: 98,
+                metrics: { love: '98%', career: '88%', wealth: '90%', sweet: '100%' },
+                analysis: '恭喜開出極稀有【心形 Pino】！今天桃花與人緣運勢爆棚！無論是職場溝通還是感情社交，你都散發著令人難以抗拒的親和甜美氣場！',
+                pairingTitle: 'PARM 朱古力雪糕批',
+                pairingDesc: '入口即化奢華絲滑質感，為你鎖定全天浪漫好運！'
+            },
+            {
+                type: 'STAR',
+                name: '星星 Pino',
+                icon: '⭐',
+                rank: '超大吉 🌟',
+                score: 99,
+                metrics: { love: '90%', career: '99%', wealth: '95%', sweet: '95%' },
+                analysis: '幸運之星高照！開出【星星 Pino】代表今日工作與學業運勢無可限量，任何棘手難題都能順利迎刃而解，展現耀眼領導光芒！',
+                pairingTitle: 'Pino 雪糕',
+                pairingDesc: '黃金一口比例，為你注入元氣滿滿的幸運星光能量！'
+            },
+            {
+                type: 'GOLDEN',
+                name: '黃金幸運草 Pino',
+                icon: '🍀',
+                rank: '至尊特大吉 👑',
+                score: 100,
+                metrics: { love: '99%', career: '99%', wealth: '99%', sweet: '100%' },
+                analysis: '太幸運了！解鎖萬中無一的【黃金幸運草 Pino】！全方位運勢直接拉滿，今天是嘗試新挑戰與收穫驚喜的極佳吉日！',
+                pairingTitle: 'Morinaga 雪糕系列全陣容',
+                pairingDesc: '盡情享受雙重甜蜜，今日幸運指數稱霸朋友圈！'
+            },
+            {
+                type: 'CLASSIC',
+                name: '經典圓錐 Pino',
+                icon: '😋',
+                rank: '吉 🍦',
+                score: 88,
+                metrics: { love: '85%', career: '88%', wealth: '85%', sweet: '90%' },
+                analysis: '開出【經典圓錐 Pino】！平穩順遂就是最大的幸福，今天生活節奏舒服流暢，午後品嚐一口 Pino 即可品味入口即化的純粹小確幸！',
+                pairingTitle: 'Pino 濃郁牛奶雪糕',
+                pairingDesc: '純粹濃郁奶香，陪伴你度過平穩治癒的幸福時光！'
+            }
+        ];
+
+        let userName = '';
+        let selectedFortune = null;
+
+        // Phase Navigation
+        function goToPhaseUnbox() {
+            audio.playPop();
+            const inputVal = document.getElementById('userNameInput').value.trim();
+            userName = inputVal || '幸運兒';
+
+            document.getElementById('phaseStart').classList.add('hidden');
+            document.getElementById('phaseUnbox').classList.remove('hidden');
+            setupPullTab();
+        }
+
+        // Pull Tab Interaction Logic (Touch & Drag Handle)
+        function setupPullTab() {
+            const handle = document.getElementById('pullTabHandle');
+            const track = document.getElementById('pullTabTrack');
+            const boxLid = document.getElementById('boxLid');
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+
+            function onPointerDown(e) {
+                isDragging = true;
+                startX = e.clientX || (e.touches && e.touches[0].clientX);
+                audio.playTear();
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const deltaX = clientX - startX;
+                const maxTrack = track.clientWidth - handle.clientWidth - 10;
+                currentX = Math.max(0, Math.min(deltaX, maxTrack));
+                handle.style.transform = `translateX(${currentX}px)`;
+
+                if (currentX >= maxTrack - 5) {
+                    isDragging = false;
+                    completeUnboxing();
+                }
+            }
+
+            function onPointerUp() {
+                if (!isDragging) return;
+                isDragging = false;
+                if (currentX < track.clientWidth - handle.clientWidth - 20) {
+                    handle.style.transform = `translateX(0px)`;
+                }
+            }
+
+            handle.addEventListener('mousedown', onPointerDown);
+            window.addEventListener('mousemove', onPointerMove);
+            window.addEventListener('mouseup', onPointerUp);
+
+            handle.addEventListener('touchstart', onPointerDown, { passive: true });
+            window.addEventListener('touchmove', onPointerMove, { passive: true });
+            window.addEventListener('touchend', onPointerUp);
+        }
+
+        function completeUnboxing() {
+            audio.playChime();
+            const boxLid = document.getElementById('boxLid');
+            boxLid.classList.add('lid-peeled');
+
+            setTimeout(() => {
+                document.getElementById('phaseUnbox').classList.add('hidden');
+                document.getElementById('phaseSelect').classList.remove('hidden');
+                renderPinoSelectionGrid();
+            }, 700);
+        }
+
+        // Render 6 Pino Pieces in Tray Grid
+        function renderPinoSelectionGrid() {
+            const grid = document.getElementById('pinoSelectionGrid');
+            grid.innerHTML = '';
+
+            // Randomly select index for the special luck shape (60% chance Heart/Star, 10% Golden, 30% Classic)
+            const rand = Math.random();
+            let specialIndex = Math.floor(Math.random() * 6);
+            let luckTypeIndex = 3; // default classic
+            if (rand < 0.35) luckTypeIndex = 0; // Heart
+            else if (rand < 0.70) luckTypeIndex = 1; // Star
+            else if (rand < 0.85) luckTypeIndex = 2; // Golden
+            
+            for (let i = 0; i < 6; i++) {
+                const isSpecial = (i === specialIndex);
+                const fortuneObj = isSpecial ? FORTUNE_TYPES[luckTypeIndex] : FORTUNE_TYPES[3];
+
+                const piece = document.createElement('div');
+                piece.className = 'w-20 h-20 bg-gradient-to-br from-stone-800 to-amber-950 rounded-full border border-amber-500/40 flex items-center justify-center text-3xl cursor-pointer shadow-lg hover:scale-105 active:scale-95 transition relative group';
+                
+                // Ice cream cone styling
+                piece.innerHTML = `
+                    <div class="w-14 h-14 bg-gradient-to-b from-[#5c3317] to-[#361d0f] rounded-2xl flex items-center justify-center border border-amber-400/30 shadow-inner group-hover:border-amber-300">
+                        <span class="opacity-0 group-hover:opacity-40 transition text-amber-200 text-xs">Pick</span>
+                    </div>
+                `;
+
+                piece.onclick = () => selectPinoPiece(piece, fortuneObj);
+                grid.appendChild(piece);
+            }
+        }
+
+        function selectPinoPiece(element, fortuneObj) {
+            audio.playPop();
+            audio.playChime();
+
+            element.innerHTML = `
+                <div class="w-14 h-14 bg-gradient-to-b from-[#703c1b] to-[#3d1f0c] rounded-2xl flex items-center justify-center border-2 border-amber-300 shadow-2xl animate-lucky-pulse text-2xl">
+                    ${fortuneObj.icon}
+                </div>
+            `;
+
+            selectedFortune = fortuneObj;
+
+            setTimeout(() => {
+                showResultCard();
+            }, 900);
+        }
+
+        function showResultCard() {
+            document.getElementById('phaseSelect').classList.add('hidden');
+            document.getElementById('phaseResult').classList.remove('hidden');
+
+            const f = selectedFortune;
+            document.getElementById('cardUserName').innerText = `${userName} 的幸運診斷`;
+            document.getElementById('cardResultRank').innerText = f.rank;
+            document.getElementById('resultShapeIconContainer').innerHTML = `<span class="animate-lucky-pulse">${f.icon}</span>`;
+            document.getElementById('luckScoreValue').innerText = f.score;
+            document.getElementById('shapeNameBadge').innerText = `【${f.name}】`;
+
+            document.getElementById('metricLove').innerText = f.metrics.love;
+            document.getElementById('metricCareer').innerText = f.metrics.career;
+            document.getElementById('metricWealth').innerText = f.metrics.wealth;
+            document.getElementById('metricSweet').innerText = f.metrics.sweet;
+
+            document.getElementById('fortuneTextAnalysis').innerText = f.analysis;
+            document.getElementById('pairingTitle').innerText = f.pairingTitle;
+            document.getElementById('pairingDesc').innerText = f.pairingDesc;
+        }
+
+        function shareFortuneCard() {
+            audio.playPop();
+            const shareText = `🍦我開出了【${selectedFortune.name}】！今日雪糕幸運指數：${selectedFortune.score}% ✨ 運勢評級：${selectedFortune.rank}！快來測測你的 Morinaga 今日運勢吧！`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '今日雪糕幸運指數',
+                    text: shareText,
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                // Fallback copy
+                const dummy = document.createElement('textarea');
+                document.body.appendChild(dummy);
+                dummy.value = shareText;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+                alert('已複製幸運運勢結果！快分享給朋友吧 🌟');
+            }
+        }
+
+        function resetGame() {
+            audio.playPop();
+            document.getElementById('phaseResult').classList.add('hidden');
+            document.getElementById('phaseStart').classList.remove('hidden');
+            document.getElementById('userNameInput').value = '';
+            
+            // Reset Box Lid Transform
+            const boxLid = document.getElementById('boxLid');
+            boxLid.classList.remove('lid-peeled');
+            document.getElementById('pullTabHandle').style.transform = 'translateX(0px)';
+        }
+    </script>
+</body>
+</html>
